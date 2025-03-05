@@ -1,64 +1,99 @@
-# Define the tables and their availability status
-tables = {1: "Free", 2: "Reserved", 3: "Free", 4: "Free"}
+# table_management.py
 
-# Function to get a list of free tables
-def get_free_tables(tables):
-    return [table for table, status in tables.items() if status == "Free"]
+# Import the restaurant table layout from the restaurant_tables.py file
+from restaurantTables import restaurant_tables  # Assuming restaurant_tables.py exists in the same directory
 
-# LEVEL 1: Print all free tables
-def level1(tables):
-    free_tables = get_free_tables(tables)
-    print(f"LEVEL 1: Free Tables = {free_tables}")
+# Function for Level 1: List all free tables
+def get_free_tables(tables, timeslot):
+    """
+    Returns a list of table IDs that are currently free at the given timeslot.
+    """
+    free_tables = []
+    for col in range(1, len(tables[0])):
+        if tables[timeslot][col] == 'o':
+            free_tables.append(tables[0][col])
+    return free_tables
 
-# LEVEL 2: Find one free table for a party of 2
-def level2(tables):
-    free_tables = get_free_tables(tables)
-    if free_tables:  # Check if there is at least one free table
-        print(f"LEVEL 2: One table for party size 2 = {free_tables[0]}")  # Pick the first available table
+# Function for Level 2: Find one table for the party size
+def find_one_table_for_size(tables, party_size, timeslot):
+    """
+    Returns the first table that can seat the party_size and is free during the given timeslot.
+    """
+    for col in range(1, len(tables[0])):
+        table_info = tables[0][col]
+        capacity = int(table_info.split('(')[1].split(')')[0])
+        if tables[timeslot][col] == 'o' and capacity >= party_size:
+            return tables[0][col]
+    return None
 
-# LEVEL 3: List all tables that can fit 2 people
-def level3(tables):
-    free_tables = get_free_tables(tables)
-    print(f"LEVEL 3: All tables for party size 2 = {free_tables}")
+# Function for Level 3: Find all tables for the party size
+def find_all_tables_for_size(tables, party_size, timeslot):
+    """
+    Returns a list of all table IDs that can seat the party_size and are free during the given timeslot.
+    """
+    suitable_tables = []
+    for col in range(1, len(tables[0])):
+        table_info = tables[0][col]
+        capacity = int(table_info.split('(')[1].split(')')[0])
+        if tables[timeslot][col] == 'o' and capacity >= party_size:
+            suitable_tables.append(tables[0][col])
+    return suitable_tables
 
-# LEVEL 4: Find single or combined tables for a party of 5
-def level4(tables):
-    free_tables = get_free_tables(tables)
-    possible_combos = []
+# Function for Level 4: Find tables that can accommodate the party size, including combinations of adjacent tables
+def find_tables_including_combos(tables, party_size, timeslot):
+    """
+    Returns a list of single or combined adjacent tables that can seat the party_size during the given timeslot.
+    """
+    results = []
 
-    # Check if tables 3 and 4 are free, and if so, combine them
-    if 3 in free_tables and 4 in free_tables:
-        possible_combos.append((3, 4))
+    for col in range(1, len(tables[0])):
+        table_info = tables[0][col]
+        capacity = int(table_info.split('(')[1].split(')')[0])
+        # Check if this single table fits
+        if tables[timeslot][col] == 'o' and capacity >= party_size:
+            results.append((tables[0][col],))
 
-    # Check if table 4 alone is a good option
-    if 4 in free_tables:
-        possible_combos.append((4,))
+        # Check adjacent tables for combo seating
+        if col + 1 < len(tables[0]):
+            next_capacity = int(tables[0][col + 1].split('(')[1].split(')')[0])
+            if tables[timeslot][col] == 'o' and tables[timeslot][col + 1] == 'o' and (capacity + next_capacity) >= party_size:
+                results.append((tables[0][col], tables[0][col + 1]))
 
-    print(f"LEVEL 4: Single or combined tables for party size 5 = {possible_combos}")
+    return results
 
-# BONUS: Print a more user-friendly output
-def bonus_friendly_output(tables):
-    free_tables = get_free_tables(tables)
-    
-    # If tables 3 and 4 are free, they can be combined for a larger party
-    if 3 in free_tables and 4 in free_tables:
-        print(f"Tables 3 and 4 together can seat 8 people.")
+# Bonus: Friendly output for level 4 combinations
+def friendly_output(tables, combos):
+    """
+    Prints a user-friendly message for each combination of tables found in level 4.
+    """
+    for group in combos:
+        if len(group) == 1:
+            print(f"Table {group[0]} is free and can seat {int(group[0].split('(')[1].split(')')[0])} people.")
+        else:
+            total_capacity = sum([int(table.split('(')[1].split(')')[0]) for table in group])
+            print(f"Tables {', '.join(group)} together can seat {total_capacity} people.")
 
-    # If table 4 is free by itself, print its capacity
-    if 4 in free_tables:
-        print(f"Table 4 is free and can seat 6 people.")
+# Example usage/testing
+if __name__ == "__main__":
+    # Test timeslot 1 (second row, index 1)
+    timeslot = 1
 
-# Main function to run everything
-def main():
-    # Print all levels step by step
-    level1(tables)
-    level2(tables)
-    level3(tables)
-    level4(tables)
+    # Level 1: Get all free tables at timeslot 1
+    free_tables = get_free_tables(restaurant_tables, timeslot)
+    print(f"Level 1: Free tables at timeslot {timeslot}: {free_tables}")
 
-    # Add a space before the bonus output for better readability
-    print("\nBONUS: Friendly output for the combos above")
-    bonus_friendly_output(tables)
+    # Level 2: Find one table for a party of size 2 at timeslot 1
+    one_table = find_one_table_for_size(restaurant_tables, 2, timeslot)
+    print(f"Level 2: One table for party size 2 at timeslot {timeslot}: {one_table}")
 
-# Run the program
-main()
+    # Level 3: Find all tables for a party of size 2 at timeslot 1
+    all_tables = find_all_tables_for_size(restaurant_tables, 2, timeslot)
+    print(f"Level 3: All tables for party size 2 at timeslot {timeslot}: {all_tables}")
+
+    # Level 4: Find tables that can accommodate a party size of 5 at timeslot 1
+    combos = find_tables_including_combos(restaurant_tables, 5, timeslot)
+    print(f"Level 4: Tables or combos for party size 5 at timeslot {timeslot}: {combos}")
+
+    # Bonus: Friendly output for combos found in level 4
+    print("\nBonus: Friendly output for level 4 combos:")
+    friendly_output(restaurant_tables, combos)
