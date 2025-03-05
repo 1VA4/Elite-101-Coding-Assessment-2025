@@ -1,5 +1,3 @@
-# table_management.py
-
 # Import the restaurant table layout from the restaurant_tables.py file
 from restaurantTables import restaurant_tables  # Assuming restaurant_tables.py exists in the same directory
 
